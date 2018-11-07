@@ -9,7 +9,7 @@
 <meta name="generator" content="pandoc" />
 
 
-<meta name="author" content="Jacob Fullerton" />
+<meta name="author" content="Jacob Fullerton, Levi Moneyhun" />
 
 
 <title>Titanic Project</title>
@@ -182,18 +182,79 @@ $(document).ready(function () {
 
 
 <h1 class="title toc-ignore">Titanic Project</h1>
-<h4 class="author"><em>Jacob Fullerton</em></h4>
+<h4 class="author"><em>Jacob Fullerton, Levi Moneyhun</em></h4>
 <h4 class="date"><em>11/7/2018</em></h4>
 
 </div>
 
 
-<div id="imported-packages" class="section level1">
-<h1>Imported Packages</h1>
-<pre class="r"><code>library(tidyverse)
-library(rmarkdown)</code></pre>
-<p>Test</p>
-</div>
+<pre class="r"><code>library(tidyverse)</code></pre>
+<pre><code>## ── Attaching packages ───────────────────────────────────────────────────────────────────────────────────── tidyverse 1.2.1 ──</code></pre>
+<pre><code>## ✔ ggplot2 3.0.0     ✔ purrr   0.2.5
+## ✔ tibble  1.4.2     ✔ dplyr   0.7.6
+## ✔ tidyr   0.8.1     ✔ stringr 1.3.1
+## ✔ readr   1.1.1     ✔ forcats 0.3.0</code></pre>
+<pre><code>## ── Conflicts ──────────────────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
+## ✖ dplyr::filter() masks stats::filter()
+## ✖ dplyr::lag()    masks stats::lag()</code></pre>
+<pre class="r"><code>library(randomForest)</code></pre>
+<pre><code>## randomForest 4.6-14</code></pre>
+<pre><code>## Type rfNews() to see new features/changes/bug fixes.</code></pre>
+<pre><code>## 
+## Attaching package: 'randomForest'</code></pre>
+<pre><code>## The following object is masked from 'package:dplyr':
+## 
+##     combine</code></pre>
+<pre><code>## The following object is masked from 'package:ggplot2':
+## 
+##     margin</code></pre>
+<pre class="r"><code>library(caret)</code></pre>
+<pre><code>## Loading required package: lattice</code></pre>
+<pre><code>## 
+## Attaching package: 'caret'</code></pre>
+<pre><code>## The following object is masked from 'package:purrr':
+## 
+##     lift</code></pre>
+<pre class="r"><code>titanic &lt;- read.csv(&quot;titanic_train_set.csv&quot;, header = TRUE, sep = &quot;,&quot;)
+F=c(2,3,4,9)
+for(i in F) titanic[,i]=as.factor(titanic[,i])</code></pre>
+<pre class="r"><code>train_index &lt;- createDataPartition(titanic$Survived,
+                                   p = .75,
+                                   list = FALSE,
+                                   times = 1)
+
+training_set &lt;- titanic[train_index,]
+validation_set &lt;- titanic[-train_index,]</code></pre>
+<pre class="r"><code>model1 &lt;- randomForest(training_set[,-2], training_set$Survived, 
+                       sampsize = round(0.6*(length(training_set$Survived))),ntree = 500, 
+                       mtry = sqrt(7), importance = TRUE)
+print(model1)</code></pre>
+<pre><code>## 
+## Call:
+##  randomForest(x = training_set[, -2], y = training_set$Survived,      ntree = 500, mtry = sqrt(7), sampsize = round(0.6 * (length(training_set$Survived))),      importance = TRUE) 
+##                Type of random forest: classification
+##                      Number of trees: 500
+## No. of variables tried at each split: 3
+## 
+##         OOB estimate of  error rate: 17.62%
+## Confusion matrix:
+##     0   1 class.error
+## 0 314  32  0.09248555
+## 1  67 149  0.31018519</code></pre>
+<pre class="r"><code>importance &lt;- varImp(model1)
+importance_sort &lt;- importance[order(importance[,1], decreasing = TRUE),]
+
+importance_sort</code></pre>
+<pre><code>##                  0         1
+## Sex      72.517215 72.517215
+## Pclass   26.499295 26.499295
+## Fare     18.059629 18.059629
+## Age      17.151683 17.151683
+## SibSp    10.716243 10.716243
+## Embarked  8.588906  8.588906
+## Parch     6.427798  6.427798
+## X         2.297600  2.297600</code></pre>
+<pre class="r"><code>## Sex and Pclass are most important, </code></pre>
 
 
 

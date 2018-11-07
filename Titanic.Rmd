@@ -1,6 +1,6 @@
 ---
 title: "Titanic Project"
-author: "Jacob Fullerton"
+author: "Jacob Fullerton, Levi Moneyhun"
 date: "11/7/2018"
 output: html_document
 knit: (function(input_file, encoding) {
@@ -14,10 +14,39 @@ knit: (function(input_file, encoding) {
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-#Imported Packages
-```{r Imports, message=FALSE, warning=FALSE}
+```{r}
 library(tidyverse)
-library(rmarkdown)
+library(randomForest)
+library(caret)
+titanic <- read.csv("titanic_train_set.csv", header = TRUE, sep = ",")
+F=c(2,3,4,9)
+for(i in F) titanic[,i]=as.factor(titanic[,i])
 ```
 
-Test
+```{r}
+train_index <- createDataPartition(titanic$Survived,
+                                   p = .75,
+                                   list = FALSE,
+                                   times = 1)
+
+training_set <- titanic[train_index,]
+validation_set <- titanic[-train_index,]
+```
+
+```{r}
+
+model1 <- randomForest(training_set[,-2], training_set$Survived, 
+                       sampsize = round(0.6*(length(training_set$Survived))),ntree = 500, 
+                       mtry = sqrt(7), importance = TRUE)
+print(model1)
+```
+
+```{r}
+
+importance <- varImp(model1)
+importance_sort <- importance[order(importance[,1], decreasing = TRUE),]
+
+importance_sort
+## Sex and Pclass are most important, 
+
+```
