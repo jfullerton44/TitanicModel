@@ -212,24 +212,24 @@ print(model1)</code></pre>
 ##                      Number of trees: 500
 ## No. of variables tried at each split: 3
 ## 
-##         OOB estimate of  error rate: 16.9%
+##         OOB estimate of  error rate: 15.3%
 ## Confusion matrix:
 ##     0   1 class.error
-## 0 311  35   0.1011561
-## 1  60 156   0.2777778</code></pre>
+## 0 318  28  0.08092486
+## 1  58 158  0.26851852</code></pre>
 <pre class="r"><code>importance &lt;- varImp(model1)
 importance_sort &lt;- importance[order(importance[,1], decreasing = TRUE),]
 
 importance_sort</code></pre>
 <pre><code>##                  0         1
-## Sex      67.496578 67.496578
-## Pclass   23.007604 23.007604
-## Fare     21.459189 21.459189
-## Age      13.021427 13.021427
-## Embarked 11.022897 11.022897
-## SibSp     9.553702  9.553702
-## X         6.191419  6.191419
-## Parch     5.958731  5.958731</code></pre>
+## Sex      76.383086 76.383086
+## Pclass   23.106564 23.106564
+## Fare     22.055498 22.055498
+## Age      16.692875 16.692875
+## SibSp     9.924682  9.924682
+## X         5.028077  5.028077
+## Parch     4.806675  4.806675
+## Embarked  3.778485  3.778485</code></pre>
 <pre class="r"><code>## Sex and Pclass are most important, </code></pre>
 
 
