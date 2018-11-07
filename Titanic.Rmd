@@ -1,6 +1,6 @@
 ---
 title: "Titanic Project"
-author: "Jacob Fullerton, Levi Moneyhun"
+author: "Jacob Fullerton, Levi Moneyhun, Yinhao Ge, and Amrita Singh"
 date: "11/7/2018"
 output: html_document
 knit: (function(input_file, encoding) {
