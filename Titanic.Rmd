@@ -27,7 +27,7 @@ for(i in F) titanic[,i]=as.factor(titanic[,i])
 for(i in F) test[,i]=as.factor(test[,i])
 ```
 
-```{r}
+```{r Partition Data}
 train_index <- createDataPartition(titanic$Survived,
                                    p = .75,
                                    list = FALSE,
@@ -37,7 +37,7 @@ training_set <- titanic[train_index,]
 validation_set <- titanic[-train_index,]
 ```
 
-```{r}
+```{r Make Model}
 
 bestModel <- randomForest(training_set[,-2], training_set$Survived, 
                        sampsize = round(0.6*(length(training_set$Survived))),ntree = 500, 
@@ -48,14 +48,19 @@ bestAccuracy <- mean(bestModel == validation_set$Survived)
 
 F=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)
 N=c(5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,90,100,110,120,130,140,150,160,170,180,190,200)
+Max = c(1,2,3,4,5,6)
 
 
 for (j in F){
-  for(i in N){
-    for(m in F){
+ for(i in N){
+  # for(m in F){
       titanic_model_new <- randomForest(training_set[,-2], training_set$Survived ,
-                    nodesize = j, sampsize = i, maxnodes = m, ntree = 500, 
-                    mtry = sqrt(7), importance = TRUE)
+                    nodesize = j,
+                    sampsize = i,
+                   # maxnodes = m,
+                    ntree = 500, 
+                    mtry = sqrt(7),
+                    importance = TRUE)
       
       titanic_pred_new <- predict(titanic_model_new, validation_set)
       #print(j)
@@ -70,14 +75,29 @@ for (j in F){
         bestModel <- titanic_model_new
         bestAccuracy <- accuracy
         print(accuracy)
+        besti <- i
+        bestj <- j
+        print("J")
+        print(j)
+        print("I")
+        print(i)
+        print("M")
+        #print(M)
       }
 
   }
 }
-}
+#}
 ```
 
+
 ```{r}
+rfcv(training_set[,-2], training_set$Survived )
+
+```
+
+
+```{r Get Importance}
 
 importance <- varImp(bestModel)
 importance_sort <- importance[order(importance[,1], decreasing = TRUE),]
@@ -88,7 +108,7 @@ importance_sort
 ```
 
 
-```{r}
+```{r Make Output}
 
 print(test[,-2])
 testOut <- predict(bestModel,test[,-2])
