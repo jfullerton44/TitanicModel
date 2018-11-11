@@ -191,9 +191,13 @@ $(document).ready(function () {
 <pre class="r"><code>library(tidyverse)
 library(randomForest)
 library(caret)
+library(gmodels)
+
 titanic &lt;- read.csv(&quot;titanic_train_set.csv&quot;, header = TRUE, sep = &quot;,&quot;)
+test &lt;- read.csv(&quot;titanic_test_set.csv&quot;, header = TRUE, sep = &quot;,&quot;)
 F=c(2,3,4,9)
-for(i in F) titanic[,i]=as.factor(titanic[,i])</code></pre>
+for(i in F) titanic[,i]=as.factor(titanic[,i])
+for(i in F) test[,i]=as.factor(test[,i])</code></pre>
 <pre class="r"><code>train_index &lt;- createDataPartition(titanic$Survived,
                                    p = .75,
                                    list = FALSE,
@@ -201,10 +205,10 @@ for(i in F) titanic[,i]=as.factor(titanic[,i])</code></pre>
 
 training_set &lt;- titanic[train_index,]
 validation_set &lt;- titanic[-train_index,]</code></pre>
-<pre class="r"><code>model1 &lt;- randomForest(training_set[,-2], training_set$Survived, 
+<pre class="r"><code>bestModel &lt;- randomForest(training_set[,-2], training_set$Survived, 
                        sampsize = round(0.6*(length(training_set$Survived))),ntree = 500, 
                        mtry = sqrt(7), importance = TRUE)
-print(model1)</code></pre>
+print(bestModel)</code></pre>
 <pre><code>## 
 ## Call:
 ##  randomForest(x = training_set[, -2], y = training_set$Survived,      ntree = 500, mtry = sqrt(7), sampsize = round(0.6 * (length(training_set$Survived))),      importance = TRUE) 
@@ -212,25 +216,368 @@ print(model1)</code></pre>
 ##                      Number of trees: 500
 ## No. of variables tried at each split: 3
 ## 
-##         OOB estimate of  error rate: 15.3%
+##         OOB estimate of  error rate: 16.73%
 ## Confusion matrix:
 ##     0   1 class.error
-## 0 318  28  0.08092486
-## 1  58 158  0.26851852</code></pre>
-<pre class="r"><code>importance &lt;- varImp(model1)
+## 0 316  30   0.0867052
+## 1  64 152   0.2962963</code></pre>
+<pre class="r"><code>bestAccuracy &lt;- mean(bestModel == validation_set$Survived)</code></pre>
+<pre><code>## Warning in `==.default`(bestModel, validation_set$Survived): longer object
+## length is not a multiple of shorter object length</code></pre>
+<pre><code>## Warning in is.na(e1) | is.na(e2): longer object length is not a multiple of
+## shorter object length</code></pre>
+<pre class="r"><code>F=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)
+N=c(5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,90,100,110,120,130,140,150,160,170,180,190,200)
+Max = c(1,2,3,4,5,6)
+
+
+for (j in F){
+ for(i in N){
+  # for(m in F){
+      titanic_model_new &lt;- randomForest(training_set[,-2], training_set$Survived ,
+                    nodesize = j,
+                    sampsize = i,
+                   # maxnodes = m,
+                    ntree = 500, 
+                    mtry = sqrt(7),
+                    importance = TRUE)
+      
+      titanic_pred_new &lt;- predict(titanic_model_new, validation_set)
+      #print(j)
+    
+     # CrossTable(validation_set$Survived, titanic_pred_new,
+      #           prop.chisq = FALSE, prop.c = FALSE, prop.r = FALSE,
+        #         dnn = c('actual default', 'predicted default'))
+      
+      #print(postResample(titanic_pred_new, validation_set$Survived))
+      accuracy &lt;- mean(titanic_pred_new == validation_set$Survived)
+      if( accuracy &gt; bestAccuracy) {
+        bestModel &lt;- titanic_model_new
+        bestAccuracy &lt;- accuracy
+        print(accuracy)
+        besti &lt;- i
+        bestj &lt;- j
+        print(&quot;J&quot;)
+        print(j)
+        print(&quot;I&quot;)
+        print(i)
+        print(&quot;M&quot;)
+        #print(M)
+      }
+
+  }
+}</code></pre>
+<pre><code>## [1] 0.7112299
+## [1] &quot;J&quot;
+## [1] 1
+## [1] &quot;I&quot;
+## [1] 5
+## [1] &quot;M&quot;
+## [1] 0.7433155
+## [1] &quot;J&quot;
+## [1] 1
+## [1] &quot;I&quot;
+## [1] 10
+## [1] &quot;M&quot;
+## [1] 0.7486631
+## [1] &quot;J&quot;
+## [1] 1
+## [1] &quot;I&quot;
+## [1] 15
+## [1] &quot;M&quot;
+## [1] 0.7593583
+## [1] &quot;J&quot;
+## [1] 1
+## [1] &quot;I&quot;
+## [1] 20
+## [1] &quot;M&quot;
+## [1] 0.7914439
+## [1] &quot;J&quot;
+## [1] 1
+## [1] &quot;I&quot;
+## [1] 25
+## [1] &quot;M&quot;
+## [1] 0.8128342
+## [1] &quot;J&quot;
+## [1] 1
+## [1] &quot;I&quot;
+## [1] 30
+## [1] &quot;M&quot;
+## [1] 0.8235294
+## [1] &quot;J&quot;
+## [1] 1
+## [1] &quot;I&quot;
+## [1] 40
+## [1] &quot;M&quot;
+## [1] 0.8342246
+## [1] &quot;J&quot;
+## [1] 1
+## [1] &quot;I&quot;
+## [1] 80
+## [1] &quot;M&quot;
+## [1] 0.8395722
+## [1] &quot;J&quot;
+## [1] 3
+## [1] &quot;I&quot;
+## [1] 60
+## [1] &quot;M&quot;</code></pre>
+<pre class="r"><code>#}</code></pre>
+<pre class="r"><code>rfcv(training_set[,-2], training_set$Survived )</code></pre>
+<pre><code>## $n.var
+## [1] 8 4 2 1
+## 
+## $error.cv
+##         8         4         2         1 
+## 0.1761566 0.1868327 0.2206406 0.2241993 
+## 
+## $predicted
+## $predicted$`8`
+##   [1] 0 1 0 0 0 0 1 0 0 0 1 1 0 0 1 0 0 0 0 0 0 0 0 1 0 1 0 1 0 1 0 0 1 0 0
+##  [36] 1 0 0 0 1 0 0 0 0 0 0 0 0 0 0 1 0 0 1 0 0 1 0 0 0 0 1 0 0 0 0 0 1 0 1
+##  [71] 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 1 0 1
+## [106] 0 0 1 0 1 0 0 0 0 0 1 1 0 1 0 0 1 0 1 1 0 0 1 1 0 0 0 0 0 1 0 0 0 0 0
+## [141] 0 0 0 0 1 0 1 0 1 0 1 0 0 0 0 1 0 0 0 1 1 1 0 0 0 0 0 0 1 1 1 0 1 0 0
+## [176] 0 0 0 1 1 1 0 0 0 1 1 0 0 1 1 1 1 0 1 1 1 0 1 1 0 1 0 0 1 0 1 0 1 1 0
+## [211] 0 1 1 1 0 0 0 0 1 1 1 0 1 0 1 1 1 1 1 0 0 1 0 1 0 0 1 1 1 0 0 0 1 0 0
+## [246] 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 1 0 0 1 0 1 0 1 1
+## [281] 0 1 0 0 1 1 1 0 0 1 1 1 0 0 0 0 0 0 1 0 0 0 0 0 1 0 0 1 0 1 0 0 0 1 0
+## [316] 0 1 1 0 0 0 0 1 0 0 1 0 0 1 0 0 0 1 0 1 1 1 1 0 1 1 0 0 1 1 0 0 0 1 1
+## [351] 0 0 0 0 0 0 0 1 1 0 0 1 0 1 1 0 0 1 0 0 0 1 0 0 0 1 0 0 1 1 0 0 0 1 0
+## [386] 0 0 0 1 0 1 0 0 0 0 0 1 0 0 0 0 0 0 1 0 0 0 0 1 0 1 1 1 0 0 0 0 1 0 0
+## [421] 1 0 0 0 0 0 0 0 1 1 1 0 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 1 0 1 0 0 0 0 1
+## [456] 0 0 0 1 0 1 0 0 0 0 1 1 0 0 0 0 0 0 1 0 0 1 0 1 1 1 0 0 0 0 0 0 0 0 1
+## [491] 0 1 0 1 1 1 0 0 1 1 0 0 0 1 0 0 0 0 1 0 0 0 1 0 0 0 0 0 1 0 0 0 0 1 0
+## [526] 0 1 0 1 0 0 1 0 0 1 0 0 0 0 0 0 1 0 0 1 0 1 0 1 0 1 0 1 1 0 0 0 0 1 0
+## [561] 0 0
+## Levels: 0 1
+## 
+## $predicted$`4`
+##   [1] 0 1 0 0 0 1 1 0 1 0 1 1 0 0 0 0 0 0 1 0 0 0 0 1 0 1 0 1 0 0 0 0 1 0 0
+##  [36] 1 0 0 0 1 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 0 0 1
+##  [71] 0 0 0 0 0 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 1 0 1
+## [106] 0 1 1 0 1 0 0 0 0 0 1 0 0 0 0 0 1 0 1 1 0 0 1 1 0 0 0 0 0 1 0 0 0 0 0
+## [141] 0 0 0 0 1 0 1 0 1 0 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 0 0 1 1 1 0 1 0 0
+## [176] 0 0 0 0 1 1 0 0 0 1 1 0 0 1 1 1 1 0 1 1 1 0 1 1 0 0 0 0 1 0 1 0 1 1 0
+## [211] 0 1 0 0 0 0 0 0 1 1 0 0 0 0 1 1 1 1 0 0 0 0 1 1 1 0 1 1 1 0 0 0 1 0 0
+## [246] 0 1 1 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 1 0 1 1 0 1 0 1 0
+## [281] 0 1 0 0 1 0 1 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 1 0 0 1 0 0
+## [316] 0 1 1 0 0 0 0 1 0 0 1 0 0 1 0 0 0 1 0 1 1 1 1 0 1 1 0 0 0 1 0 0 0 1 0
+## [351] 0 0 0 0 0 0 0 1 1 0 0 0 0 1 1 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 1 1 0
+## [386] 0 0 0 1 0 1 0 0 0 0 0 1 0 0 0 0 0 0 1 0 0 0 0 1 0 1 1 0 0 0 1 0 1 0 0
+## [421] 0 0 0 0 0 0 0 0 1 1 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 1 1 0 0 0 0 0 0 1
+## [456] 0 0 0 1 0 1 0 0 0 0 1 1 0 0 0 0 0 1 1 0 0 0 0 1 1 1 0 0 0 0 0 0 0 0 1
+## [491] 0 1 0 1 1 1 1 0 0 0 0 0 1 1 0 0 0 1 1 0 0 0 1 0 0 0 0 0 1 0 0 0 0 1 0
+## [526] 0 1 0 1 0 0 1 0 0 1 1 0 0 0 0 0 1 0 0 1 0 1 0 1 0 1 0 1 1 0 0 0 0 1 1
+## [561] 1 0
+## Levels: 0 1
+## 
+## $predicted$`2`
+##   [1] 0 1 0 0 0 0 0 0 1 0 1 0 0 0 0 0 0 0 0 0 0 1 0 1 0 1 0 0 0 1 0 0 1 0 0
+##  [36] 1 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0
+##  [71] 0 0 0 0 0 0 0 0 0 0 1 1 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 1 0 0
+## [106] 0 0 0 0 1 0 0 0 0 0 0 1 0 0 0 0 1 0 0 1 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0
+## [141] 0 0 0 1 1 0 0 0 1 0 0 0 0 0 1 1 0 0 0 0 1 1 0 0 0 0 0 0 1 1 1 0 1 0 0
+## [176] 0 0 0 0 1 1 0 0 0 1 0 0 0 1 1 1 1 0 1 1 1 0 1 1 0 0 0 0 1 0 1 0 0 1 0
+## [211] 0 1 1 0 0 0 0 0 1 1 0 0 0 0 1 1 0 1 0 0 0 0 0 1 0 0 1 0 1 0 0 0 1 0 0
+## [246] 0 1 1 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0 1 0 0 1 0 1 0 1 0
+## [281] 0 1 0 0 1 0 0 0 0 0 1 1 0 0 0 0 0 0 1 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0
+## [316] 0 1 0 0 0 0 0 1 0 0 1 0 0 1 0 0 0 1 0 0 1 0 1 0 1 1 1 0 0 1 0 0 0 1 0
+## [351] 0 0 1 0 0 0 0 1 0 0 0 0 0 1 1 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0
+## [386] 0 0 0 1 0 1 0 0 0 0 0 1 0 0 0 0 0 0 1 0 0 0 0 1 1 0 0 0 0 0 0 0 0 0 0
+## [421] 0 0 0 0 0 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 1
+## [456] 0 0 0 1 0 1 0 0 0 0 1 0 0 0 0 0 0 0 1 0 0 0 0 1 1 0 0 0 0 0 0 0 0 0 1
+## [491] 0 1 0 0 1 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 1 0 0 0 1 0 1 0 0 1 0 0 0
+## [526] 1 0 0 1 0 0 1 0 0 1 0 0 0 0 0 0 1 1 0 1 0 0 0 1 0 0 0 1 1 0 0 0 0 1 0
+## [561] 0 0
+## Levels: 0 1
+## 
+## $predicted$`1`
+##   [1] 0 1 0 0 0 0 1 0 1 0 1 1 0 0 1 1 0 0 0 0 1 1 1 1 0 1 0 1 0 1 0 0 1 0 0
+##  [36] 1 0 0 0 1 0 0 0 1 0 0 0 0 0 0 0 0 0 1 0 0 1 0 0 0 0 1 0 0 0 1 0 1 0 1
+##  [71] 0 1 0 0 0 0 0 0 0 0 1 1 0 1 1 1 0 0 1 0 0 1 0 0 0 0 1 0 0 0 0 0 1 0 0
+## [106] 0 0 1 0 1 0 0 1 0 0 0 1 0 1 0 0 1 1 0 1 0 0 1 1 0 0 0 0 0 1 0 0 0 0 0
+## [141] 0 0 0 1 1 0 1 0 1 0 1 0 0 0 1 1 0 1 0 1 1 1 0 0 0 0 0 0 1 1 1 0 1 1 0
+## [176] 0 0 0 1 1 1 0 0 0 1 1 0 0 1 1 1 1 0 1 1 1 0 1 1 1 1 0 0 1 0 1 0 0 1 0
+## [211] 0 1 1 0 0 0 0 0 1 1 1 0 1 0 1 1 1 1 0 0 0 0 1 1 1 0 1 1 1 0 0 0 1 0 0
+## [246] 0 1 1 0 1 0 0 0 1 0 1 0 0 1 0 1 0 0 1 1 1 0 0 1 0 0 1 0 1 1 0 1 1 1 0
+## [281] 0 1 0 0 1 0 0 0 0 0 1 1 0 0 0 0 0 0 1 1 0 0 0 0 1 0 0 0 1 1 0 0 0 0 0
+## [316] 0 1 1 1 0 0 0 1 0 0 1 0 0 1 0 0 0 1 0 1 1 0 1 0 1 1 1 0 0 1 0 0 0 1 1
+## [351] 0 0 1 0 0 0 0 1 1 0 0 1 0 1 1 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 1
+## [386] 1 0 0 1 0 1 0 0 0 0 0 1 0 0 0 0 0 1 1 0 0 1 0 1 1 0 1 0 0 0 1 0 1 0 0
+## [421] 0 0 0 0 0 0 0 0 1 1 0 0 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 1 0 0 0 0 1
+## [456] 0 0 0 1 0 1 0 0 0 0 1 1 0 1 0 0 0 0 1 0 0 0 0 1 1 0 0 0 0 0 0 0 0 0 1
+## [491] 0 1 0 1 1 1 0 0 0 0 0 0 0 1 1 1 0 0 0 0 0 0 1 0 1 0 1 0 1 0 0 1 0 0 0
+## [526] 1 0 0 1 0 0 1 0 0 1 0 0 0 0 0 0 1 1 0 1 0 0 0 1 0 1 0 1 1 1 0 1 0 1 1
+## [561] 0 0
+## Levels: 0 1</code></pre>
+<pre class="r"><code>importance &lt;- varImp(bestModel)
 importance_sort &lt;- importance[order(importance[,1], decreasing = TRUE),]
 
 importance_sort</code></pre>
 <pre><code>##                  0         1
-## Sex      76.383086 76.383086
-## Pclass   23.106564 23.106564
-## Fare     22.055498 22.055498
-## Age      16.692875 16.692875
-## SibSp     9.924682  9.924682
-## X         5.028077  5.028077
-## Parch     4.806675  4.806675
-## Embarked  3.778485  3.778485</code></pre>
+## Sex      34.204899 34.204899
+## Fare     13.719699 13.719699
+## Pclass   12.059349 12.059349
+## Age       7.657443  7.657443
+## SibSp     4.353970  4.353970
+## Embarked  3.443088  3.443088
+## Parch     2.543919  2.543919
+## X         1.817898  1.817898</code></pre>
 <pre class="r"><code>## Sex and Pclass are most important, </code></pre>
+<pre class="r"><code>print(test[,-2])</code></pre>
+<pre><code>##       X Pclass    Sex   Age SibSp Parch     Fare Embarked
+## 1     2      1 female 38.00     1     0  71.2833        C
+## 2     9      3 female 27.00     0     2  11.1333        S
+## 3    10      2 female 14.00     1     0  30.0708        C
+## 4    12      1 female 58.00     0     0  26.5500        S
+## 5    17      3   male  2.00     4     1  29.1250        Q
+## 6    24      1   male 28.00     0     0  35.5000        S
+## 7    31      1   male 40.00     0     0  27.7208        C
+## 8    37      3   male 28.00     0     0   7.2292        C
+## 9    46      3   male 28.00     0     0   8.0500        S
+## 10   53      1 female 49.00     1     0  76.7292        C
+## 11   63      1   male 45.00     1     0  83.4750        S
+## 12   65      1   male 28.00     0     0  27.7208        C
+## 13   66      3   male 28.00     1     1  15.2458        C
+## 14   69      3 female 17.00     4     2   7.9250        S
+## 15   80      3 female 30.00     0     0  12.4750        S
+## 16   92      3   male 20.00     0     0   7.8542        S
+## 17   99      2 female 34.00     0     1  23.0000        S
+## 18  105      3   male 37.00     2     0   7.9250        S
+## 19  114      3 female 20.00     1     0   9.8250        S
+## 20  117      3   male 70.50     0     0   7.7500        Q
+## 21  124      2 female 32.50     0     0  13.0000        S
+## 22  126      3   male 12.00     1     0  11.2417        C
+## 23  129      3 female 28.00     1     1  22.3583        C
+## 24  135      2   male 25.00     0     0  13.0000        S
+## 25  139      3   male 16.00     0     0   9.2167        S
+## 26  140      1   male 24.00     0     0  79.2000        C
+## 27  151      2   male 51.00     0     0  12.5250        S
+## 28  160      3   male 28.00     8     2  69.5500        S
+## 29  168      3 female 45.00     1     4  27.9000        S
+## 30  175      1   male 56.00     0     0  30.6958        C
+## 31  188      1   male 45.00     0     0  26.5500        S
+## 32  192      2   male 19.00     0     0  13.0000        S
+## 33  210      1   male 40.00     0     0  31.0000        C
+## 34  213      3   male 22.00     0     0   7.2500        S
+## 35  214      2   male 30.00     0     0  13.0000        S
+## 36  217      3 female 27.00     0     0   7.9250        S
+## 37  218      2   male 42.00     1     0  27.0000        S
+## 38  219      1 female 32.00     0     0  76.2917        C
+## 39  220      2   male 30.00     0     0  10.5000        S
+## 40  225      1   male 38.00     1     0  90.0000        S
+## 41  233      2   male 59.00     0     0  13.5000        S
+## 42  234      3 female  5.00     4     2  31.3875        S
+## 43  240      2   male 33.00     0     0  12.2750        S
+## 44  242      3 female 28.00     1     0  15.5000        Q
+## 45  258      1 female 30.00     0     0  86.5000        S
+## 46  265      3 female 28.00     0     0   7.7500        Q
+## 47  267      3   male 16.00     4     1  39.6875        S
+## 48  281      3   male 65.00     0     0   7.7500        Q
+## 49  284      3   male 19.00     0     0   8.0500        S
+## 50  288      3   male 22.00     0     0   7.8958        S
+## 51  289      2   male 42.00     0     0  13.0000        S
+## 52  296      1   male 28.00     0     0  27.7208        C
+## 53  300      1 female 50.00     0     1 247.5208        C
+## 54  302      3   male 28.00     2     0  23.2500        Q
+## 55  306      1   male  0.92     1     2 151.5500        S
+## 56  314      3   male 28.00     0     0   7.8958        S
+## 57  316      3 female 26.00     0     0   7.8542        S
+## 58  318      2   male 54.00     0     0  14.0000        S
+## 59  321      3   male 22.00     0     0   7.2500        S
+## 60  323      2 female 30.00     0     0  12.3500        Q
+## 61  328      2 female 36.00     0     0  13.0000        S
+## 62  336      3   male 28.00     0     0   7.8958        S
+## 63  345      2   male 36.00     0     0  13.0000        S
+## 64  351      3   male 23.00     0     0   9.2250        S
+## 65  378      1   male 27.00     0     2 211.5000        C
+## 66  391      1   male 36.00     1     2 120.0000        S
+## 67  402      3   male 26.00     0     0   8.0500        S
+## 68  408      2   male  3.00     1     1  18.7500        S
+## 69  422      3   male 21.00     0     0   7.7333        Q
+## 70  430      3   male 32.00     0     0   8.0500        S
+## 71  435      1   male 50.00     1     0  55.9000        S
+## 72  449      3 female  5.00     2     1  19.2583        C
+## 73  451      2   male 36.00     1     2  27.7500        S
+## 74  453      1   male 30.00     0     0  27.7500        C
+## 75  455      3   male 28.00     0     0   8.0500        S
+## 76  462      3   male 34.00     0     0   8.0500        S
+## 77  464      2   male 48.00     0     0  13.0000        S
+## 78  470      3 female  0.75     2     1  19.2583        C
+## 79  471      3   male 28.00     0     0   7.2500        S
+## 80  490      3   male  9.00     1     1  15.9000        S
+## 81  491      3   male 28.00     1     0  19.9667        S
+## 82  497      1 female 54.00     1     0  78.2667        C
+## 83  501      3   male 17.00     0     0   8.6625        S
+## 84  503      3 female 28.00     0     0   7.6292        Q
+## 85  509      3   male 28.00     0     0  22.5250        S
+## 86  511      3   male 29.00     0     0   7.7500        Q
+## 87  522      3   male 22.00     0     0   7.8958        S
+## 88  523      3   male 28.00     0     0   7.2250        C
+## 89  549      3   male 33.00     1     1  20.5250        S
+## 90  577      2 female 34.00     0     0  13.0000        S
+## 91  584      1   male 36.00     0     0  40.1250        C
+## 92  589      3   male 22.00     0     0   8.0500        S
+## 93  590      3   male 28.00     0     0   8.0500        S
+## 94  594      3 female 28.00     0     2   7.7500        Q
+## 95  605      1   male 35.00     0     0  26.5500        C
+## 96  612      3   male 28.00     0     0   7.0500        S
+## 97  625      3   male 21.00     0     0  16.1000        S
+## 98  627      2   male 57.00     0     0  12.3500        Q
+## 99  647      3   male 19.00     0     0   7.8958        S
+## 100 657      3   male 28.00     0     0   7.8958        S
+## 101 665      3   male 20.00     1     0   7.9250        S
+## 102 673      2   male 70.00     0     0  10.5000        S
+## 103 687      3   male 14.00     4     1  39.6875        S
+## 104 707      2 female 45.00     0     0  13.5000        S
+## 105 711      1 female 24.00     0     0  49.5042        C
+## 106 715      2   male 52.00     0     0  13.0000        S
+## 107 734      2   male 23.00     0     0  13.0000        S
+## 108 735      2   male 23.00     0     0  13.0000        S
+## 109 736      3   male 28.50     0     0  16.1000        S
+## 110 737      3 female 48.00     1     3  34.3750        S
+## 111 739      3   male 28.00     0     0   7.8958        S
+## 112 740      3   male 28.00     0     0   7.8958        S
+## 113 753      3   male 33.00     0     0   9.5000        S
+## 114 756      2   male  0.67     1     1  14.5000        S
+## 115 759      3   male 34.00     0     0   8.0500        S
+## 116 760      1 female 33.00     0     0  86.5000        S
+## 117 766      1 female 51.00     1     0  77.9583        S
+## 118 775      2 female 54.00     1     3  23.0000        S
+## 119 777      3   male 28.00     0     0   7.7500        Q
+## 120 779      3   male 28.00     0     0   7.7375        Q
+## 121 782      1 female 17.00     1     0  57.0000        S
+## 122 784      3   male 28.00     1     2  23.4500        S
+## 123 786      3   male 25.00     0     0   7.2500        S
+## 124 787      3 female 18.00     0     0   7.4958        S
+## 125 793      3 female 28.00     8     2  69.5500        S
+## 126 795      3   male 25.00     0     0   7.8958        S
+## 127 799      3   male 30.00     0     0   7.2292        C
+## 128 808      3 female 18.00     0     0   7.7750        S
+## 129 816      1   male 28.00     0     0   0.0000        S
+## 130 818      2   male 31.00     1     1  37.0042        C
+## 131 819      3   male 43.00     0     0   6.4500        S
+## 132 828      2   male  1.00     0     2  37.0042        C
+## 133 853      3 female  9.00     1     1  15.2458        C
+## 134 854      1 female 16.00     0     1  39.4000        S
+## 135 855      2 female 44.00     1     0  26.0000        S
+## 136 856      3 female 18.00     0     1   9.3500        S
+## 137 859      3 female 24.00     0     3  19.2583        C
+## 138 866      2 female 42.00     0     0  13.0000        S
+## 139 874      3   male 47.00     0     0   9.0000        S
+## 140 878      3   male 19.00     0     0   7.8958        S
+## 141 882      3   male 33.00     0     0   7.8958        S
+## 142 884      2   male 28.00     0     0  10.5000        S</code></pre>
+<pre class="r"><code>testOut &lt;- predict(bestModel,test[,-2])
+
+
+
+output &lt;- transmute(test,
+                  #  ID = PassengerID, 
+                    p = testOut
+)
+
+write.csv(output,'submission.csv', quote= FALSE)              </code></pre>
 
 
 
