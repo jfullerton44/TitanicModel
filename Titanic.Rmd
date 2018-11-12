@@ -53,17 +53,14 @@ Max = c(1,2,3,4,5,6)
 
 for (j in F){
  for(i in N){
-  # for(m in F){
       titanic_model_new <- randomForest(training_set[,-2], training_set$Survived ,
                     nodesize = j,
                     sampsize = i,
-                   # maxnodes = m,
                     ntree = 500, 
                     mtry = sqrt(7),
                     importance = TRUE)
-      
+      #Best current j = 12, best i = 45
       titanic_pred_new <- predict(titanic_model_new, validation_set)
-      #print(j)
     
      # CrossTable(validation_set$Survived, titanic_pred_new,
       #           prop.chisq = FALSE, prop.c = FALSE, prop.r = FALSE,
@@ -81,14 +78,13 @@ for (j in F){
         print(j)
         print("I")
         print(i)
-        print("M")
-        #print(M)
       }
 
   }
 }
-#}
+
 ```
+The best value for node size appears to be 12 and the best value for sample size appears to be 45.
 
 
 ```{r}
