@@ -34,26 +34,31 @@ train_index <- createDataPartition(titanic$Survived,
                                    times = 1)
 
 training_set <- titanic[train_index,]
+training_set <- training_set[,-1]
 validation_set <- titanic[-train_index,]
+validation_set <- validation_set[,-1]
 ```
 
 ```{r Make Model}
 
-bestModel <- randomForest(training_set[,-2], training_set$Survived, 
+bestModel <- randomForest(training_set[,-1], training_set$Survived, 
                        sampsize = round(0.6*(length(training_set$Survived))),ntree = 500, 
                        mtry = sqrt(7), importance = TRUE)
 print(bestModel)
-bestAccuracy <- mean(bestModel == validation_set$Survived)
+predictions <- predict(bestModel, validation_set)
+bestAccuracy <- mean(predictions == validation_set$Survived)
+print("original Model")
+print(bestAccuracy)
 
 
-F=c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)
+F=c(16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1)
 N=c(5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,90,100,110,120,130,140,150,160,170,180,190,200)
 Max = c(1,2,3,4,5,6)
 
 
 for (j in F){
  for(i in N){
-      titanic_model_new <- randomForest(training_set[,-2], training_set$Survived ,
+      titanic_model_new <- randomForest(training_set[,-1], training_set$Survived ,
                     nodesize = j,
                     sampsize = i,
                     ntree = 500, 
@@ -88,7 +93,7 @@ The best value for node size appears to be 12 and the best value for sample size
 
 
 ```{r}
-rfcv(training_set[,-2], training_set$Survived )
+rfcv(training_set[,-1], training_set$Survived )
 
 ```
 
@@ -107,7 +112,7 @@ importance_sort
 ```{r Make Output}
 
 print(test[,-2])
-testOut <- predict(bestModel,test[,-2])
+testOut <- predict(bestModel,test[,-1])
 
 
 
