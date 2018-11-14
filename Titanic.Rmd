@@ -22,6 +22,7 @@ library(gmodels)
 
 titanic <- read.csv("titanic_train_set.csv", header = TRUE, sep = ",")
 test <- read.csv("titanic_test_set.csv", header = TRUE, sep = ",")
+titanic_test <- test
 F=c(2,3,4,9)
 for(i in F) titanic[,i]=as.factor(titanic[,i])
 for(i in F) test[,i]=as.factor(test[,i])
@@ -174,7 +175,7 @@ pred_table <- data.frame(ID=titanic_test$PassengerID, p=pred_vector)
 
 pred_table
 
-write.csv(pred_table, file="/Users/levimoneyhun/Desktop/UVA/Fall 2018/DS 4001/Titanic/Prediction.csv", row.names = FALSE)
+write.csv(pred_table, file="Prediction.csv", row.names = FALSE)
 ```
 
 ```{r Make Output}
