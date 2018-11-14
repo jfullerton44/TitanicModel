@@ -19,6 +19,7 @@ library(tidyverse)
 library(randomForest)
 library(caret)
 library(gmodels)
+library(cvTools) 
 
 titanic <- read.csv("titanic_train_set.csv", header = TRUE, sep = ",")
 test <- read.csv("titanic_test_set.csv", header = TRUE, sep = ",")
@@ -90,7 +91,46 @@ for (j in F){
 
 ```
 The best value for node size appears to be 12 and the best value for sample size appears to be 45.
+```{r}
+k <- 10 #the number of folds
 
+dataset <- titanic
+
+folds <- cvFolds(NROW(dataset), K=k)
+dataset$holdoutpred <- rep(0,nrow(dataset))
+accuracy.vector <- rep(0,k)
+## Outer-Loop for Testing and Evaluation
+for(i in 1:k){
+  train <- dataset[folds$subsets[folds$which != i], ] #Set the training set
+  test <- dataset[folds$subsets[folds$which == i], ] #Set the validation set
+  ## Setup to run inner loop (indicate 5-fold CV):
+  ControlParameters <- trainControl(method="cv", number = 5,
+                                    savePredictions = TRUE,
+                                    classProbs = FALSE)
+  ## Running a random forest model; therefore, tune "mtry" values
+  parameterGrid <-expand.grid(mtry=c(2,3,4,5))
+  
+  ## Inner-Loop for model selection:
+  cvRandomModel <- train(Survived ~ ., data = train,
+                         method = "rf",
+                         trControl = ControlParameters,
+                         tuneGrid = parameterGrid)
+  ## End inner-loop
+  ## Get prediction for ith test fold
+  p <- predict(cvRandomModel,test)
+  
+  ## Check accuracy for the ith test fold
+  
+  accuracy.vector[i] <- mean(p==test$Survived)
+  ## Save prediction values in the holdoutpred column you created in 
+  ## the dataset
+  dataset[folds$subsets[folds$which == i], ]$holdoutpred <- p
+}
+dataset$holdoutpred #do whatever you want with these predictions
+
+crossAccuracy <- 1 - mean(dataset$holdoutpred == titanic$Survived)
+print(crossAccuracy)
+```
 
 ```{r}
 rfcv(training_set[,-1], training_set$Survived )
