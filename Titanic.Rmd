@@ -27,6 +27,59 @@ for(i in F) titanic[,i]=as.factor(titanic[,i])
 for(i in F) test[,i]=as.factor(test[,i])
 ```
 
+
+```{r Standardize Fare by Departure Location}
+l = length(titanic$Survived)
+
+s_fare <- c()
+q_fare <- c()
+c_fare <- c()
+
+obs = c(1:l)
+
+for(i in obs)
+{
+    if(titanic[i,"Embarked"] == "S")
+      {
+        s_fare <- c(s_fare, titanic[i,"Fare"])
+      }
+    if(titanic[i,"Embarked"] == "Q")
+      {
+        q_fare <- c(q_fare, titanic[i,"Fare"])
+      }
+    if(titanic[i,"Embarked"] == "C")
+      {
+        c_fare <- c(c_fare, titanic[i,"Fare"])
+      }
+}
+
+s_fare_mean <- mean(s_fare)
+q_fare_mean <- mean(q_fare)
+c_fare_mean <- mean(c_fare)
+
+titanic$standardized_fare <- ifelse(titanic$Embarked == "S", titanic$Fare/s_fare_mean, 
+                                    ifelse(titanic$Embarked == "Q", titanic$Fare/q_fare_mean, titanic$Fare/c_fare_mean))
+
+titanic_test$standardized_fare <- ifelse(titanic_test$Embarked == "S", titanic_test$Fare/s_fare_mean, 
+                                    ifelse(titanic_test$Embarked == "Q", 
+                                           titanic_test$Fare/q_fare_mean, titanic_test$Fare/c_fare_mean))
+```
+
+```{r Bin Age Range}
+
+titanic$age_range <- as.factor(ifelse(titanic$Age < 16, 1, ifelse(titanic$Age < 32, 2, ifelse(titanic$Age < 48, 3, ifelse(titanic$Age < 64, 4, 5)))))
+titanic_test$age_range <- as.factor(ifelse(titanic_test$Age < 16, 1, ifelse(titanic_test$Age < 32, 2, ifelse(titanic_test$Age < 48, 3, ifelse(titanic_test$Age < 64, 4, 5)))))
+
+```
+
+```{r Gropusize}
+
+titanic$groupsize <- titanic$Parch + titanic$SibSp
+titanic_test$groupsize <- titanic_test$Parch + titanic_test$SibSp
+
+```
+
+
 ```{r Partition Data}
 train_index <- createDataPartition(titanic$Survived,
                                    p = .75,
@@ -108,6 +161,21 @@ importance_sort
 
 ```
 
+```{r}
+validation_predict <- predict(bestModel, validation_set)
+
+confusionMatrix(data = validation_predict, reference = validation_set$Survived, mode = "prec_recall")
+```
+
+```{r}
+pred_vector <- predict(bestModel, titanic_test)
+
+pred_table <- data.frame(ID=titanic_test$PassengerID, p=pred_vector)
+
+pred_table
+
+write.csv(pred_table, file="/Users/levimoneyhun/Desktop/UVA/Fall 2018/DS 4001/Titanic/Prediction.csv", row.names = FALSE)
+```
 
 ```{r Make Output}
 
