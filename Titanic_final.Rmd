@@ -109,7 +109,7 @@ titanic <- titanic[,-1]
 ```
 
 The code below was used for making random forest models. We ended up not using this as our final prediction model as we found boosting to be more accurate. We used a nested-loop structure to tune the hyperparameters nodesize and sampsize. The results of this tuning are below the code. 
-```{r Make Model, eval=FALSE}
+```{r Make Model, echo=TRUE}
 bestModel <- randomForest(training_set[,-1], training_set$Survived, 
                        sampsize = round(0.6*(length(training_set$Survived))),ntree = 500, 
                        mtry = sqrt(7), importance = TRUE)
