@@ -11,6 +11,7 @@
 
 <meta name="author" content="Jacob Fullerton, Levi Moneyhun, Yinhao Ge, and Amrita Singh" />
 
+<meta name="date" content="2018-11-28" />
 
 <title>Titanic Project</title>
 
@@ -368,11 +369,12 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">Titanic Project</h1>
 <h4 class="author"><em>Jacob Fullerton, Levi Moneyhun, Yinhao Ge, and Amrita Singh</em></h4>
-<h4 class="date"><em>11/7/2018</em></h4>
+<h4 class="date"><em>11/28/2018</em></h4>
 
 </div>
 
 
+<p>This step libraries the necessary packages.</p>
 <pre class="r"><code>library(tidyverse)
 library(randomForest)
 library(caret)
@@ -386,23 +388,20 @@ library(ggplot2)
 library(ipred)
 library(adabag)
 library(pROC)
-library(randomForest)
-
-titanic &lt;- read.csv(&quot;titanic_train_set.csv&quot;, header = TRUE, sep = &quot;,&quot;)
+library(randomForest)</code></pre>
+<p>This step imports the training and test data. It also ensures that several categorical variables are read as factors.</p>
+<pre class="r"><code>titanic &lt;- read.csv(&quot;titanic_train_set.csv&quot;, header = TRUE, sep = &quot;,&quot;)
 test &lt;- read.csv(&quot;titanic_test_set.csv&quot;, header = TRUE, sep = &quot;,&quot;)
 titanic_test &lt;- test
 F=c(2,3,4,9)
 for(i in F) titanic[,i]=as.factor(titanic[,i])
 for(i in F) titanic_test[,i]=as.factor(test[,i])</code></pre>
-<p>The code below creates a new feature with the standardized fare. This is based on the fare the passenger paid and the location they departed from.</p>
+<p>The code below creates a new feature which represents standardized fare. Because fare depends on both class and departure location, standardizing fare by departure locations allows us to interpret the resulting feature as information about class more granularly than simply 1st, 2nd, and 3rd class. To create this feature, we calculated the mean fare for each location and divided individual observations by the mean for the corresponding location.</p>
 <pre class="r"><code>l = length(titanic$Survived)
-
 s_fare &lt;- c()
 q_fare &lt;- c()
 c_fare &lt;- c()
-
 obs = c(1:l)
-
 for(i in obs)
 {
     if(titanic[i,&quot;Embarked&quot;] == &quot;S&quot;)
@@ -418,51 +417,58 @@ for(i in obs)
         c_fare &lt;- c(c_fare, titanic[i,&quot;Fare&quot;])
       }
 }
-
 s_fare_mean &lt;- mean(s_fare)
 q_fare_mean &lt;- mean(q_fare)
 c_fare_mean &lt;- mean(c_fare)
-
 titanic$standardized_fare &lt;- ifelse(titanic$Embarked == &quot;S&quot;, titanic$Fare/s_fare_mean, 
                                     ifelse(titanic$Embarked == &quot;Q&quot;, titanic$Fare/q_fare_mean, titanic$Fare/c_fare_mean))
-
 titanic_test$standardized_fare &lt;- ifelse(titanic_test$Embarked == &quot;S&quot;, titanic_test$Fare/s_fare_mean, 
                                     ifelse(titanic_test$Embarked == &quot;Q&quot;, 
                                            titanic_test$Fare/q_fare_mean, titanic_test$Fare/c_fare_mean))</code></pre>
-<p>This code modifies the age feature to create bins of ages instead of continious ages.</p>
+<p>This code creates an age range feature, which bins several significant cateories of ages. We used 16, 32, 48, and 64 as the cutoffs for these bins. Because the effect of age may not be strictly increasing or strictly decreasing (e.g., from 0-16, increases in age could result in a lower likelihood of survival, while, from 16-32, increases in age could result in a higher likelihood of survival). Capturing bins of age, as well as age as a continuous variable, allows algorithms to interpret age data in a more sophisticated manner.</p>
 <pre class="r"><code>titanic$age_range &lt;- as.factor(ifelse(titanic$Age &lt; 16, 1, ifelse(titanic$Age &lt; 32, 2, ifelse(titanic$Age &lt; 48, 3, ifelse(titanic$Age &lt; 64, 4, 5)))))
 titanic_test$age_range &lt;- as.factor(ifelse(titanic_test$Age &lt; 16, 1, ifelse(titanic_test$Age &lt; 32, 2, ifelse(titanic_test$Age &lt; 48, 3, ifelse(titanic_test$Age &lt; 64, 4, 5)))))</code></pre>
-<p>This code creates a new feature called group side based on Parch and SibSp.</p>
+<p>This code creates a new feature called group size based on ParCh (the number of parents and children which were on board with a given passenger) and SibSp (the number of siblings and spouses on board with a given passenger).</p>
 <pre class="r"><code>titanic$groupsize &lt;- titanic$Parch + titanic$SibSp
 titanic_test$groupsize &lt;- titanic_test$Parch + titanic_test$SibSp</code></pre>
-<p>This code partitions the input data into training and validation sets. These sets will be used for hyperparameter tuning.</p>
+<p>We experimented with several other engineered features, which ultimately did not improve predictive success: 1. age_sex: an eight-level categorical variable which encompassed all possible interactions of age_range and sex. 2. groupsize_sex: a ten-level categorical variable which encompassed all possible interactions of groupsize and sex. 3. likelymother: a two-level categorical variable which identified, on the basis of age, sex, and Parch, whether an individual was likely to be a mother. 4. alone: a two-level categorical variable which identified, on the basis of groupsize, whether an invidual was on-board by themselves.</p>
+<p>This code partitions the input data into training and validation sets, which will be used for hyperparameter tuning.</p>
 <pre class="r"><code>train_index &lt;- createDataPartition(titanic$Survived,
                                    p = .75,
                                    list = FALSE,
                                    times = 1)
-
 training_set &lt;- titanic[train_index,]
 training_set &lt;- training_set[,-1]
 titanic_test &lt;- titanic_test[,-1]
 validation_set &lt;- titanic[-train_index,]
 validation_set &lt;- validation_set[,-1]
 titanic &lt;- titanic[,-1]</code></pre>
-<p>The code below was used for making random forest models. We ended up not using this as our final prediction model as we found boosting to be more accurate.</p>
+<p>The code below was used for making random forest models. We ended up not using this as our final prediction model as we found boosting to be more accurate. We used a nested-loop structure to tune the hyperparameters nodesize and sampsize. The results of this tuning are below the code.</p>
 <pre class="r"><code>bestModel &lt;- randomForest(training_set[,-1], training_set$Survived, 
                        sampsize = round(0.6*(length(training_set$Survived))),ntree = 500, 
                        mtry = sqrt(7), importance = TRUE)
-print(bestModel)
-predictions &lt;- predict(bestModel, validation_set)
+print(bestModel)</code></pre>
+<pre><code>## 
+## Call:
+##  randomForest(x = training_set[, -1], y = training_set$Survived,      ntree = 500, mtry = sqrt(7), sampsize = round(0.6 * (length(training_set$Survived))),      importance = TRUE) 
+##                Type of random forest: classification
+##                      Number of trees: 500
+## No. of variables tried at each split: 3
+## 
+##         OOB estimate of  error rate: 16.19%
+## Confusion matrix:
+##     0   1 class.error
+## 0 316  30   0.0867052
+## 1  61 155   0.2824074</code></pre>
+<pre class="r"><code>predictions &lt;- predict(bestModel, validation_set)
 bestAccuracy &lt;- mean(predictions == validation_set$Survived)
-print(&quot;original Model&quot;)
-print(bestAccuracy)
-
-
-F=c(16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1)
+print(&quot;original Model&quot;)</code></pre>
+<pre><code>## [1] &quot;original Model&quot;</code></pre>
+<pre class="r"><code>print(bestAccuracy)</code></pre>
+<pre><code>## [1] 0.8074866</code></pre>
+<pre class="r"><code>F=c(16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1)
 N=c(5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,90,100,110,120,130,140,150,160,170,180,190,200)
 Max = c(1,2,3,4,5,6)
-
-
 for (j in F){
  for(i in N){
       titanic_model_new &lt;- randomForest(training_set[,-1], training_set$Survived ,
@@ -491,9 +497,39 @@ for (j in F){
         print(&quot;I&quot;)
         print(i)
       }
-
   }
 }</code></pre>
+<pre><code>## [1] 0.8181818
+## [1] &quot;J&quot;
+## [1] 16
+## [1] &quot;I&quot;
+## [1] 90
+## [1] 0.8235294
+## [1] &quot;J&quot;
+## [1] 16
+## [1] &quot;I&quot;
+## [1] 110
+## [1] 0.8342246
+## [1] &quot;J&quot;
+## [1] 16
+## [1] &quot;I&quot;
+## [1] 120
+## [1] 0.8395722
+## [1] &quot;J&quot;
+## [1] 16
+## [1] &quot;I&quot;
+## [1] 150
+## [1] 0.8502674
+## [1] &quot;J&quot;
+## [1] 16
+## [1] &quot;I&quot;
+## [1] 160
+## [1] 0.855615
+## [1] &quot;J&quot;
+## [1] 11
+## [1] &quot;I&quot;
+## [1] 120</code></pre>
+<pre class="r"><code>rf_model &lt;- bestModel</code></pre>
 <p>The best value for node size appears to be 12 and the best value for sample size appears to be 45.</p>
 <p>The code below was used to find the best hyperparameters for the boosting model approach. This method uses a validation set approach where the various hyperparameters are tested over a single valiatation set.</p>
 <pre class="r"><code>Grid &lt;- expand.grid(maxdepth=c(1,3,5,7,9,11),nu=c(.01,0.02,0.04,0.05,0.06),iter=c(120,130,140,150,160,170,180,190,200))
@@ -503,23 +539,58 @@ set.seed(123)
 results_ada = train(Survived~., data=training_set, method=&quot;ada&quot;,
                     trControl=cv_opts,tuneGrid=Grid)
 print(results_ada)</code></pre>
-<p>The code below makes the boosted model using the hyperparameters from above. We also run the model building on the entire titanic set for increased accuracy.</p>
-<pre class="r"><code>bestModel&lt;-boosting(Survived ~ ., data=titanic, boos=FALSE, mfinal=120,maxdepth=9,nu=0.04)</code></pre>
-<p>The code below was used during random forests to determine the importance of each factor in prediction if a passenger survived.</p>
-<pre class="r"><code>importance &lt;- varImp(bestModel)
+<p>The code below creates the boosting model using the hyperparameters from above.</p>
+<pre class="r"><code>bestModel&lt;-boosting(Survived ~ ., data=training_set, boos=FALSE, mfinal=120,maxdepth=9,nu=0.04)</code></pre>
+<p>The code below was used during random forests to determine the importance of each factor in prediction if a passenger survived. Note: this is based on the random forest model we developed, not the boosting model which we ended up using for our actual predictions.</p>
+<pre class="r"><code>importance &lt;- varImp(rf_model)
 importance_sort &lt;- importance[order(importance[,1], decreasing = TRUE),]
-
-importance_sort
-## Sex and Pclass are most important, </code></pre>
-<p>This code creates a confusion matrix for the predicted outcomes.</p>
+importance_sort</code></pre>
+<pre><code>##                           0         1
+## Sex               38.100480 38.100480
+## Pclass            11.704992 11.704992
+## Fare              10.773394 10.773394
+## standardized_fare  9.951100  9.951100
+## Age                7.983972  7.983972
+## groupsize          5.278918  5.278918
+## SibSp              4.794020  4.794020
+## age_range          4.328522  4.328522
+## Embarked           3.669093  3.669093
+## Parch              1.810906  1.810906</code></pre>
+<pre class="r"><code>## Sex and Pclass are most important</code></pre>
+<p>This code creates a confusion matrix for the predicted outcomes on the validation set.</p>
 <pre class="r"><code>validation_predict &lt;- predict(bestModel, validation_set)
-
-confusionMatrix(data = validation_predict, reference = validation_set$Survived, mode = &quot;prec_recall&quot;)</code></pre>
-<p>This is the first method to create an output of all the predicted outcomes for the test set.</p>
+predictions &lt;- as.factor(ifelse(validation_predict$class == &quot;1&quot;, 1, 0))
+confusionMatrix(data = predictions, reference = validation_set$Survived, mode = &quot;prec_recall&quot;)</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction   0   1
+##          0 102  23
+##          1  13  49
+##                                           
+##                Accuracy : 0.8075          
+##                  95% CI : (0.7436, 0.8614)
+##     No Information Rate : 0.615           
+##     P-Value [Acc &gt; NIR] : 1.113e-08       
+##                                           
+##                   Kappa : 0.5826          
+##  Mcnemar&#39;s Test P-Value : 0.1336          
+##                                           
+##               Precision : 0.8160          
+##                  Recall : 0.8870          
+##                      F1 : 0.8500          
+##              Prevalence : 0.6150          
+##          Detection Rate : 0.5455          
+##    Detection Prevalence : 0.6684          
+##       Balanced Accuracy : 0.7838          
+##                                           
+##        &#39;Positive&#39; Class : 0               
+## </code></pre>
+<p>Here, we create the boosting model building on the entire titanic set for increased accuracy on the test set.</p>
+<pre class="r"><code>bestModel&lt;-boosting(Survived ~ ., data=titanic, boos=FALSE, mfinal=120,maxdepth=9,nu=0.04)</code></pre>
+<p>Next, we create our final predictions and output them to a CSV file.</p>
 <pre class="r"><code>pred_vector &lt;- predict(bestModel, titanic_test)
-
 pred_table &lt;- data.frame(ID=titanic_test$PassengerID, p=pred_vector$class)
-
 pred_table</code></pre>
 <pre><code>##      ID p
 ## 1     1 1
@@ -665,18 +736,6 @@ pred_table</code></pre>
 ## 141 141 0
 ## 142 142 0</code></pre>
 <pre class="r"><code>write.csv(pred_table, file=&quot;Prediction.csv&quot;, row.names = FALSE)</code></pre>
-<p>This is a second method to make an output file. (doesnt work as well)</p>
-<pre class="r"><code>print(titanic_test[,-2])
-testOut &lt;- predict(bestModel,titanic_test[,-1])
-
-
-
-output &lt;- transmute(titanic_test,
-                  #  ID = PassengerID, 
-                    p = testOut
-)
-
-write.csv(output,&#39;submission.csv&#39;, quote= FALSE)              </code></pre>
 
 
 
