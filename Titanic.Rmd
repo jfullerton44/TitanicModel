@@ -19,13 +19,23 @@ library(tidyverse)
 library(randomForest)
 library(caret)
 library(gmodels)
+library(doSNOW)
+registerDoSNOW(makeCluster(2, type = "SOCK"))
+library(ada)
+library(plyr)
+library(dplyr)
+library(ggplot2)
+library(ipred)
+library(adabag)
+library(pROC)
+library(randomForest)
 
 titanic <- read.csv("titanic_train_set.csv", header = TRUE, sep = ",")
 test <- read.csv("titanic_test_set.csv", header = TRUE, sep = ",")
 titanic_test <- test
 F=c(2,3,4,9)
 for(i in F) titanic[,i]=as.factor(titanic[,i])
-for(i in F) test[,i]=as.factor(test[,i])
+for(i in F) titanic_test[,i]=as.factor(test[,i])
 ```
 
 
@@ -89,11 +99,13 @@ train_index <- createDataPartition(titanic$Survived,
 
 training_set <- titanic[train_index,]
 training_set <- training_set[,-1]
+titanic_test <- titanic_test[,-1]
 validation_set <- titanic[-train_index,]
 validation_set <- validation_set[,-1]
+titanic <- titanic[,-1]
 ```
 
-```{r Make Model}
+```{r Make Model, eval=FALSE, include=FALSE}
 
 bestModel <- randomForest(training_set[,-1], training_set$Survived, 
                        sampsize = round(0.6*(length(training_set$Survived))),ntree = 500, 
@@ -151,8 +163,25 @@ rfcv(training_set[,-1], training_set$Survived )
 
 ```
 
+```{r Boosted Params, eval=FALSE, message=TRUE, warning=TRUE, include=FALSE, paged.print=TRUE}
+Grid <- expand.grid(maxdepth=c(1,3,5,7,9,11),nu=c(.01,0.02,0.04,0.05,0.06),iter=c(120,130,140,150,160,170,180,190,200))
+cv_opts = trainControl(method="cv", number=10)
+set.seed(123)
+#Grid <- expand.grid(maxdepth=c(2,3),nu=0.1,iter=c(50,100))
+results_ada = train(Survived~., data=training_set, method="ada",
+                    trControl=cv_opts,tuneGrid=Grid)
+print(results_ada)
+```
 
-```{r Get Importance}
+```{r Make boosted Model}
+
+bestModel<-boosting(Survived ~ ., data=titanic, boos=FALSE, mfinal=120,maxdepth=9,nu=0.04)
+
+```
+
+
+
+```{r Get Importance, eval=FALSE, include=FALSE}
 
 importance <- varImp(bestModel)
 importance_sort <- importance[order(importance[,1], decreasing = TRUE),]
@@ -162,7 +191,7 @@ importance_sort
 
 ```
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 validation_predict <- predict(bestModel, validation_set)
 
 confusionMatrix(data = validation_predict, reference = validation_set$Survived, mode = "prec_recall")
@@ -171,21 +200,21 @@ confusionMatrix(data = validation_predict, reference = validation_set$Survived, 
 ```{r}
 pred_vector <- predict(bestModel, titanic_test)
 
-pred_table <- data.frame(ID=titanic_test$PassengerID, p=pred_vector)
+pred_table <- data.frame(ID=titanic_test$PassengerID, p=pred_vector$class)
 
 pred_table
 
 write.csv(pred_table, file="Prediction.csv", row.names = FALSE)
 ```
 
-```{r Make Output}
+```{r Make Output, eval=FALSE, include=FALSE}
 
-print(test[,-2])
-testOut <- predict(bestModel,test[,-1])
+print(titanic_test[,-2])
+testOut <- predict(bestModel,titanic_test[,-1])
 
 
 
-output <- transmute(test,
+output <- transmute(titanic_test,
                   #  ID = PassengerID, 
                     p = testOut
 )
