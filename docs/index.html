@@ -394,6 +394,7 @@ titanic_test &lt;- test
 F=c(2,3,4,9)
 for(i in F) titanic[,i]=as.factor(titanic[,i])
 for(i in F) titanic_test[,i]=as.factor(test[,i])</code></pre>
+<p>The code below creates a new feature with the standardized fare. This is based on the fare the passenger paid and the location they departed from.</p>
 <pre class="r"><code>l = length(titanic$Survived)
 
 s_fare &lt;- c()
@@ -428,10 +429,13 @@ titanic$standardized_fare &lt;- ifelse(titanic$Embarked == &quot;S&quot;, titani
 titanic_test$standardized_fare &lt;- ifelse(titanic_test$Embarked == &quot;S&quot;, titanic_test$Fare/s_fare_mean, 
                                     ifelse(titanic_test$Embarked == &quot;Q&quot;, 
                                            titanic_test$Fare/q_fare_mean, titanic_test$Fare/c_fare_mean))</code></pre>
+<p>This code modifies the age feature to create bins of ages instead of continious ages.</p>
 <pre class="r"><code>titanic$age_range &lt;- as.factor(ifelse(titanic$Age &lt; 16, 1, ifelse(titanic$Age &lt; 32, 2, ifelse(titanic$Age &lt; 48, 3, ifelse(titanic$Age &lt; 64, 4, 5)))))
 titanic_test$age_range &lt;- as.factor(ifelse(titanic_test$Age &lt; 16, 1, ifelse(titanic_test$Age &lt; 32, 2, ifelse(titanic_test$Age &lt; 48, 3, ifelse(titanic_test$Age &lt; 64, 4, 5)))))</code></pre>
+<p>This code creates a new feature called group side based on Parch and SibSp.</p>
 <pre class="r"><code>titanic$groupsize &lt;- titanic$Parch + titanic$SibSp
 titanic_test$groupsize &lt;- titanic_test$Parch + titanic_test$SibSp</code></pre>
+<p>This code partitions the input data into training and validation sets. These sets will be used for hyperparameter tuning.</p>
 <pre class="r"><code>train_index &lt;- createDataPartition(titanic$Survived,
                                    p = .75,
                                    list = FALSE,
@@ -491,7 +495,6 @@ for (j in F){
   }
 }</code></pre>
 <p>The best value for node size appears to be 12 and the best value for sample size appears to be 45.</p>
-<pre class="r"><code>rfcv(training_set[,-1], training_set$Survived )</code></pre>
 <p>The code below was used to find the best hyperparameters for the boosting model approach. This method uses a validation set approach where the various hyperparameters are tested over a single valiatation set.</p>
 <pre class="r"><code>Grid &lt;- expand.grid(maxdepth=c(1,3,5,7,9,11),nu=c(.01,0.02,0.04,0.05,0.06),iter=c(120,130,140,150,160,170,180,190,200))
 cv_opts = trainControl(method=&quot;cv&quot;, number=10)
