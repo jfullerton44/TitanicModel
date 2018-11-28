@@ -455,17 +455,17 @@ print(bestModel)</code></pre>
 ##                      Number of trees: 500
 ## No. of variables tried at each split: 3
 ## 
-##         OOB estimate of  error rate: 16.19%
+##         OOB estimate of  error rate: 16.55%
 ## Confusion matrix:
 ##     0   1 class.error
 ## 0 316  30   0.0867052
-## 1  61 155   0.2824074</code></pre>
+## 1  63 153   0.2916667</code></pre>
 <pre class="r"><code>predictions &lt;- predict(bestModel, validation_set)
 bestAccuracy &lt;- mean(predictions == validation_set$Survived)
 print(&quot;original Model&quot;)</code></pre>
 <pre><code>## [1] &quot;original Model&quot;</code></pre>
 <pre class="r"><code>print(bestAccuracy)</code></pre>
-<pre><code>## [1] 0.8074866</code></pre>
+<pre><code>## [1] 0.8128342</code></pre>
 <pre class="r"><code>F=c(16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1)
 N=c(5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,90,100,110,120,130,140,150,160,170,180,190,200)
 Max = c(1,2,3,4,5,6)
@@ -499,36 +499,26 @@ for (j in F){
       }
   }
 }</code></pre>
-<pre><code>## [1] 0.8181818
+<pre><code>## [1] 0.8235294
 ## [1] &quot;J&quot;
 ## [1] 16
 ## [1] &quot;I&quot;
-## [1] 90
-## [1] 0.8235294
+## [1] 75
+## [1] 0.828877
 ## [1] &quot;J&quot;
 ## [1] 16
 ## [1] &quot;I&quot;
-## [1] 110
-## [1] 0.8342246
-## [1] &quot;J&quot;
-## [1] 16
-## [1] &quot;I&quot;
-## [1] 120
+## [1] 80
 ## [1] 0.8395722
 ## [1] &quot;J&quot;
 ## [1] 16
 ## [1] &quot;I&quot;
-## [1] 150
-## [1] 0.8502674
+## [1] 110
+## [1] 0.8449198
 ## [1] &quot;J&quot;
-## [1] 16
+## [1] 10
 ## [1] &quot;I&quot;
-## [1] 160
-## [1] 0.855615
-## [1] &quot;J&quot;
-## [1] 11
-## [1] &quot;I&quot;
-## [1] 120</code></pre>
+## [1] 65</code></pre>
 <pre class="r"><code>rf_model &lt;- bestModel</code></pre>
 <p>The best value for node size appears to be 12 and the best value for sample size appears to be 45.</p>
 <p>The code below was used to find the best hyperparameters for the boosting model approach. This method uses a validation set approach where the various hyperparameters are tested over a single valiatation set.</p>
@@ -546,16 +536,16 @@ print(results_ada)</code></pre>
 importance_sort &lt;- importance[order(importance[,1], decreasing = TRUE),]
 importance_sort</code></pre>
 <pre><code>##                           0         1
-## Sex               38.100480 38.100480
-## Pclass            11.704992 11.704992
-## Fare              10.773394 10.773394
-## standardized_fare  9.951100  9.951100
-## Age                7.983972  7.983972
-## groupsize          5.278918  5.278918
-## SibSp              4.794020  4.794020
-## age_range          4.328522  4.328522
-## Embarked           3.669093  3.669093
-## Parch              1.810906  1.810906</code></pre>
+## Sex               28.331916 28.331916
+## Pclass             8.894444  8.894444
+## Fare               8.796019  8.796019
+## standardized_fare  8.794841  8.794841
+## Age                5.888343  5.888343
+## groupsize          4.676254  4.676254
+## SibSp              4.621043  4.621043
+## age_range          4.104680  4.104680
+## Embarked           3.161144  3.161144
+## Parch              1.335355  1.335355</code></pre>
 <pre class="r"><code>## Sex and Pclass are most important</code></pre>
 <p>This code creates a confusion matrix for the predicted outcomes on the validation set.</p>
 <pre class="r"><code>validation_predict &lt;- predict(bestModel, validation_set)
@@ -564,25 +554,25 @@ confusionMatrix(data = predictions, reference = validation_set$Survived, mode = 
 <pre><code>## Confusion Matrix and Statistics
 ## 
 ##           Reference
-## Prediction   0   1
-##          0 102  23
-##          1  13  49
+## Prediction  0  1
+##          0 99 18
+##          1 16 54
 ##                                           
-##                Accuracy : 0.8075          
-##                  95% CI : (0.7436, 0.8614)
+##                Accuracy : 0.8182          
+##                  95% CI : (0.7553, 0.8707)
 ##     No Information Rate : 0.615           
-##     P-Value [Acc &gt; NIR] : 1.113e-08       
+##     P-Value [Acc &gt; NIR] : 1.48e-09        
 ##                                           
-##                   Kappa : 0.5826          
-##  Mcnemar&#39;s Test P-Value : 0.1336          
+##                   Kappa : 0.6141          
+##  Mcnemar&#39;s Test P-Value : 0.8638          
 ##                                           
-##               Precision : 0.8160          
-##                  Recall : 0.8870          
-##                      F1 : 0.8500          
+##               Precision : 0.8462          
+##                  Recall : 0.8609          
+##                      F1 : 0.8534          
 ##              Prevalence : 0.6150          
-##          Detection Rate : 0.5455          
-##    Detection Prevalence : 0.6684          
-##       Balanced Accuracy : 0.7838          
+##          Detection Rate : 0.5294          
+##    Detection Prevalence : 0.6257          
+##       Balanced Accuracy : 0.8054          
 ##                                           
 ##        &#39;Positive&#39; Class : 0               
 ## </code></pre>
