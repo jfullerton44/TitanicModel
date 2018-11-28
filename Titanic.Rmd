@@ -105,7 +105,8 @@ validation_set <- validation_set[,-1]
 titanic <- titanic[,-1]
 ```
 
-```{r Make Model, eval=FALSE, include=FALSE}
+The code below was used for making random forest models. We ended up not using this as our final prediction model as we found boosting to be more accurate.
+```{r Make Model, eval=FALSE}
 
 bestModel <- randomForest(training_set[,-1], training_set$Survived, 
                        sampsize = round(0.6*(length(training_set$Survived))),ntree = 500, 
@@ -158,12 +159,14 @@ for (j in F){
 The best value for node size appears to be 12 and the best value for sample size appears to be 45.
 
 
-```{r}
+```{r eval=FALSE}
 rfcv(training_set[,-1], training_set$Survived )
 
 ```
 
-```{r Boosted Params, eval=FALSE, message=TRUE, warning=TRUE, include=FALSE, paged.print=TRUE}
+
+The code below was used to find the best hyperparameters for the boosting model approach. This method uses a validation set approach where the various hyperparameters are tested over a single valiatation set.
+```{r Boosted Params, eval=FALSE, message=TRUE, warning=TRUE, paged.print=TRUE}
 Grid <- expand.grid(maxdepth=c(1,3,5,7,9,11),nu=c(.01,0.02,0.04,0.05,0.06),iter=c(120,130,140,150,160,170,180,190,200))
 cv_opts = trainControl(method="cv", number=10)
 set.seed(123)
@@ -173,6 +176,8 @@ results_ada = train(Survived~., data=training_set, method="ada",
 print(results_ada)
 ```
 
+
+The code below makes the boosted model using the hyperparameters from above. We also run the model building on the entire titanic set for increased accuracy.
 ```{r Make boosted Model}
 
 bestModel<-boosting(Survived ~ ., data=titanic, boos=FALSE, mfinal=120,maxdepth=9,nu=0.04)
@@ -180,8 +185,8 @@ bestModel<-boosting(Survived ~ ., data=titanic, boos=FALSE, mfinal=120,maxdepth=
 ```
 
 
-
-```{r Get Importance, eval=FALSE, include=FALSE}
+The code below was used during random forests to determine the importance of each factor in prediction if a passenger survived. 
+```{r Get Importance, eval=FALSE}
 
 importance <- varImp(bestModel)
 importance_sort <- importance[order(importance[,1], decreasing = TRUE),]
@@ -191,12 +196,15 @@ importance_sort
 
 ```
 
-```{r eval=FALSE, include=FALSE}
+This code creates a confusion matrix for the predicted outcomes.
+```{r eval=FALSE}
 validation_predict <- predict(bestModel, validation_set)
 
 confusionMatrix(data = validation_predict, reference = validation_set$Survived, mode = "prec_recall")
 ```
 
+
+This is the first method to create an output of all the predicted outcomes for the test set.
 ```{r}
 pred_vector <- predict(bestModel, titanic_test)
 
@@ -207,7 +215,9 @@ pred_table
 write.csv(pred_table, file="Prediction.csv", row.names = FALSE)
 ```
 
-```{r Make Output, eval=FALSE, include=FALSE}
+
+This is a second method to make an output file. (doesnt work as well)
+```{r Make Output, eval=FALSE}
 
 print(titanic_test[,-2])
 testOut <- predict(bestModel,titanic_test[,-1])
